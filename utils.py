@@ -63,6 +63,21 @@ def get_dataset(dataset, data_path, batch_size=1, subset="imagenette", args=None
         dst_test = datasets.CIFAR10(data_path, train=False, download=True, transform=transform)
         class_names = dst_train.classes
         class_map = {x:x for x in range(num_classes)}
+        
+    elif dataset == 'EuroSAT':
+        channel = 3
+        im_size = (32, 32)
+        num_classes = 10
+        mean = [0.344, 0.380, 0.407]
+        std = [0.202, 0.136, 0.115]
+        if args.zca:
+            transform = transforms.Compose([transforms.ToTensor()])
+        else:
+            transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean=mean, std=std)])
+        dst_train = datasets.EuroSAT(data_path, download=True, transform=transform) # no augmentation
+        dst_test = datasets.EuroSAT(data_path, download=True, transform=transform)
+        class_names = dst_train.classes
+        class_map = {x:x for x in range(num_classes)}
 
 
     elif dataset == 'Tiny':
