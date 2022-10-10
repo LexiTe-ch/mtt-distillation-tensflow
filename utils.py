@@ -14,10 +14,6 @@ from torchvision import datasets, transforms
 from scipy.ndimage.interpolation import rotate as scipyrotate
 from networks import MLP, ConvNet, LeNet, AlexNet, VGG11BN, VGG11, ResNet18, ResNet18BN_AP, ResNet18_AP
 
-#Tensorflow Part:
-import tensorflow as tf
-import tensorflow.keras as keras
-import tensorflow_datasets as tfds
 
 class Config:
     imagenette = [0, 217, 482, 491, 497, 566, 569, 571, 574, 701]
@@ -75,17 +71,114 @@ def get_dataset(dataset, data_path, batch_size=1, subset="imagenette", args=None
         num_classes = 10
         mean = [0.344, 0.380, 0.407]
         std = [0.202, 0.136, 0.115]
+        
+        ### New Code ###
+        
+        data_path = '/content/sample_data'
+        
+        eurosat_dst_train = datasets.EuroSAT(data_path, download=True, transform=transform) # no augmentation
+        
+        ROOT_PATH = '/content/sample_data/'
+        BASE_PATH = os.path.join(ROOT_PATH, 'eurosat/2750')
+        DATA_PATH = os.path.join(ROOT_PATH, 'eurosat/2750')
+        FULL_DATA_DF = os.path.join(ROOT_PATH, 'FULL_DATA.csv')
+
+        if not os.path.isdir(DATA_PATH):
+            os.mkdir(DATA_PATH)
+
+        IDX_CLASS_LABELS = {
+            0: 'AnnualCrop',
+            1: 'Forest', 
+            2: 'HerbaceousVegetation',
+            3: 'Highway',
+            4: 'Industrial',
+            5: 'Pasture',
+            6: 'PermanentCrop',
+            7: 'Residential',
+            8: 'River',
+            9: 'SeaLake'
+        }
+        CLASSES = ['AnnualCrop', 'Forest', 'HerbaceousVegetation', 'Highway', 'Industrial', 'Pasture','PermanentCrop','Residential','River', 'SeaLake']
+        CLASS_IDX_LABELS = dict()
+        for key, val in IDX_CLASS_LABELS.items():
+          CLASS_IDX_LABELS[val] = key
+
+        NUM_CLASSES = len(IDX_CLASS_LABELS.items())
+        torch.manual_seed(10)
+        VALID_SIZE = 0.1
+        
+        ## Give idx of each class name
+        def encode_label(label):
+            idx = CLASS_IDX_LABELS[label] 
+            return idx
+
+        ## Take in idx and return the class name
+        def decode_target(target, text_labels=True):
+            result = []
+            if text_labels:
+                return IDX_CLASS_LABELS[target]
+            else:
+                return target
+
+        ## Show batches of images
+        def show_batch(dl):
+            for images, labels in dl:
+                fig, ax = plt.subplots(figsize=(16, 8))
+                ax.set_xticks([]); ax.set_yticks([])
+                ax.imshow(make_grid(images, nrow=16).permute(1, 2, 0))
+                break
+        
+        from os import walk
+
+        i = 0
+        DATA_DF = pd.DataFrame(columns = ['image_id', 'label']) 
+
+        for (dirpath, dirname, filename) in walk(BASE_PATH):
+          for each_file in filename:
+            DATA_DF.loc[i] = [each_file, dirpath.split('/')[-1]]
+            i += 1
+          #break
+        DATA_DF.to_csv(FULL_DATA_DF, index=False)
+        DATA_DF = DATA_DF.iloc[8:]
+        
+        DATA_DF = pd.read_csv(FULL_DATA_DF)
+        DATA_DF = DATA_DF.sample(frac = 1, random_state=48) 
+        TRAIN_DF = DATA_DF[:-int(len(DATA_DF)*VALID_SIZE)]
+        VALID_DF = DATA_DF[-int(len(DATA_DF)*VALID_SIZE) :]
+        
+        TRAIN_DF.reset_index(inplace = True) 
+        VALID_DF.reset_index(inplace = True) 
+        
+        class EuroSAT(Dataset):
+            def __init__(self, train_df, train_dir, transform=None):
+                self.train_dir = train_dir
+                self.train_df = train_df
+                self.transform = transform
+
+            def __len__(self):
+                return len(self.train_df)
+
+            def __getitem__(self, idx):
+                row = self.train_df.loc[idx]
+                img_id, label = row['image_id'], row['label']
+                img = Image.open(os.path.join(self.train_dir, img_id.split('.')[0].split('_')[0], img_id))
+                if self.transform:
+                    img = self.transform(img)
+                return img, encode_label(label)
+            
+        ### ###
+        
         if args.zca:
             transform = transforms.Compose([transforms.ToTensor(),
                                         transforms.Resize(im_size),
                                         transforms.CenterCrop(im_size)])
         else:
             transform = transforms.Compose([transforms.ToTensor(), transforms.Resize(im_size), transforms.Normalize(mean=mean, std=std)])
-        (dst_test, valid_set, dst_train), info = tfds.load('eurosat/rgb', split = ['train[:10%]', 'train[10%:25]', 'train[25%:]' ], as_supervised=True, with_info=True)
+        dst_train = EuroSAT(TRAIN_DF, BASE_PATH, transform)
+        dst_test = EuroSAT(VALID_DF, BASE_PATH, transform)
         #dst_train = datasets.EuroSAT(data_path, download=True, transform=transform) # no augmentation
         #dst_test = datasets.EuroSAT(data_path, download=True, transform=transform)
-        #class_names = dst_train.classes
-        class_names = info.features['label'].names
+        class_names = dst_train.classes
         class_map = {x:x for x in range(num_classes)}
 
 
