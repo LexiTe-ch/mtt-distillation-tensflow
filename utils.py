@@ -72,6 +72,13 @@ def get_dataset(dataset, data_path, batch_size=1, subset="imagenette", args=None
         mean = [0.344, 0.380, 0.407]
         std = [0.202, 0.136, 0.115]
         
+        if args.zca:
+            transform = transforms.Compose([transforms.ToTensor(),
+                                        transforms.Resize(im_size),
+                                        transforms.CenterCrop(im_size)])
+        else:
+            transform = transforms.Compose([transforms.ToTensor(), transforms.Resize(im_size), transforms.Normalize(mean=mean, std=std)])
+        
         ### New Code ###
         
         data_path = '/content/sample_data'
@@ -167,13 +174,7 @@ def get_dataset(dataset, data_path, batch_size=1, subset="imagenette", args=None
                 return img, encode_label(label)
             
         ### ###
-        
-        if args.zca:
-            transform = transforms.Compose([transforms.ToTensor(),
-                                        transforms.Resize(im_size),
-                                        transforms.CenterCrop(im_size)])
-        else:
-            transform = transforms.Compose([transforms.ToTensor(), transforms.Resize(im_size), transforms.Normalize(mean=mean, std=std)])
+       
         dst_train = EuroSAT(TRAIN_DF, BASE_PATH, transform)
         dst_test = EuroSAT(VALID_DF, BASE_PATH, transform)
         #dst_train = datasets.EuroSAT(data_path, download=True, transform=transform) # no augmentation
