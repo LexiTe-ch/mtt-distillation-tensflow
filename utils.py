@@ -14,6 +14,11 @@ from torchvision import datasets, transforms
 from scipy.ndimage.interpolation import rotate as scipyrotate
 from networks import MLP, ConvNet, LeNet, AlexNet, VGG11BN, VGG11, ResNet18, ResNet18BN_AP, ResNet18_AP
 
+#Tensorflow Part:
+import tensorflow as tf
+import tensorflow.keras as keras
+import tensorflow_datasets as tfds
+
 class Config:
     imagenette = [0, 217, 482, 491, 497, 566, 569, 571, 574, 701]
 
@@ -76,9 +81,11 @@ def get_dataset(dataset, data_path, batch_size=1, subset="imagenette", args=None
                                         transforms.CenterCrop(im_size)])
         else:
             transform = transforms.Compose([transforms.ToTensor(), transforms.Resize(im_size), transforms.Normalize(mean=mean, std=std)])
-        dst_train = datasets.EuroSAT(data_path, download=True, transform=transform) # no augmentation
-        dst_test = datasets.EuroSAT(data_path, download=True, transform=transform)
-        class_names = dst_train.classes
+        (dst_test, valid_set, dst_train), info = tfds.load('eurosat/rgb', split = ['train[:10%]', 'train[10%:25]', 'train[25%:]' ], as_supervised=True, with_info=True)
+        #dst_train = datasets.EuroSAT(data_path, download=True, transform=transform) # no augmentation
+        #dst_test = datasets.EuroSAT(data_path, download=True, transform=transform)
+        #class_names = dst_train.classes
+        class_names = info.features['label'].names
         class_map = {x:x for x in range(num_classes)}
 
 
