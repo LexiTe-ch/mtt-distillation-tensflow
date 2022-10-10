@@ -180,7 +180,7 @@ def get_dataset(dataset, data_path, batch_size=1, subset="imagenette", args=None
         dst_test = EuroSAT(VALID_DF, BASE_PATH, transform)
         #dst_train = datasets.EuroSAT(data_path, download=True, transform=transform) # no augmentation
         #dst_test = datasets.EuroSAT(data_path, download=True, transform=transform)
-        class_names = dst_train.classes
+        class_names = ['AnnualCrop','Forest','HerbaceousVegetation','Highway','Industrial','Pasture','PermanentCrop','Residential','River','SeaLake']
         class_map = {x:x for x in range(num_classes)}
 
 
