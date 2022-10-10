@@ -1,6 +1,43 @@
 # adapted from
 # https://github.com/VICO-UoE/DatasetCondensation
 
+###
+
+import os
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+from PIL import Image
+from tqdm import tqdm
+from tqdm.notebook import tqdm
+import seaborn as sns
+
+
+from sklearn.metrics import confusion_matrix
+from sklearn import model_selection
+
+import torch
+import torchvision.models as models
+import torch.nn as nn
+from torch.utils.data import DataLoader, Dataset, random_split
+from torchvision.transforms import transforms
+from torchvision.utils import make_grid
+import torch.nn.functional as F
+
+import time
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import os
+#import kornia as K
+import tqdm
+from torch.utils.data import Dataset
+from torchvision import datasets, transforms
+from scipy.ndimage.interpolation import rotate as scipyrotate
+
+####
+
 import time
 import numpy as np
 import pandas as pd
